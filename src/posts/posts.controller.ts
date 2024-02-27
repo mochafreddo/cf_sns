@@ -14,12 +14,12 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Get()
-  getPosts(): PostModel[] {
+  getPosts(): Promise<PostModel[]> {
     return this.postsService.getAllPosts();
   }
 
   @Get(':id')
-  getPost(@Param('id') id: string): PostModel {
+  getPost(@Param('id') id: string): Promise<PostModel> {
     return this.postsService.getPostById(+id);
   }
 
