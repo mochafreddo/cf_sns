@@ -28,7 +28,7 @@ export class PostsController {
     @Body('author') author: string,
     @Body('title') title: string,
     @Body('content') content: string,
-  ): PostModel {
+  ): Promise<PostModel> {
     return this.postsService.createPost(author, title, content);
   }
 
@@ -38,12 +38,12 @@ export class PostsController {
     @Body('author') author?: string,
     @Body('title') title?: string,
     @Body('content') content?: string,
-  ): PostModel {
+  ): Promise<PostModel> {
     return this.postsService.updatePost(+id, author, title, content);
   }
 
   @Delete(':id')
   deletePost(@Param('id') id: string) {
-    this.postsService.deletePost(+id);
+    return this.postsService.deletePost(+id);
   }
 }
