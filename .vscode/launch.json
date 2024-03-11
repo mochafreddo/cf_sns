@@ -1,0 +1,16 @@
+{
+  "configurations": [
+    {
+      "autoAttachChildProcesses": true,
+      "console": "integratedTerminal",
+      "name": "Debug NestJS",
+      "port": 9229,
+      "request": "launch",
+      "restart": true,
+      "runtimeArgs": ["start:debug"],
+      "runtimeExecutable": "yarn",
+      "type": "node"
+    }
+  ],
+  "version": "0.2.0"
+}
