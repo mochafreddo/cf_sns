@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { User } from 'src/users/decorator/user.decorator';
-import { UsersModel } from 'src/users/entities/users.entity';
+import { CreatePostDto } from './dto/create-post.dto';
 import { PostsModel } from './entities/posts.entity';
 import { PostsService } from './posts.service';
 
@@ -33,10 +33,9 @@ export class PostsController {
   @UseGuards(AccessTokenGuard)
   postPosts(
     @User('id') userId: number,
-    @Body('title') title: string,
-    @Body('content') content: string,
+    @Body() body: CreatePostDto,
   ): Promise<PostsModel> {
-    return this.postsService.createPost(userId, title, content);
+    return this.postsService.createPost(userId, body);
   }
 
   @Put(':id')
