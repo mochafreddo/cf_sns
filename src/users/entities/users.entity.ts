@@ -24,7 +24,7 @@ export class UsersModel extends BaseModel {
   @Column()
   @IsString({ message: stringValidationMessage })
   @Length(3, 8, { message: lengthValidationMessage })
-  @Exclude()
+  @Exclude({ toPlainOnly: true })
   password: string;
 
   @Column({ enum: Object.values(RolesEnum), default: RolesEnum.USER })
