@@ -1,4 +1,4 @@
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { IsEmail, IsString, Length } from 'class-validator';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { emailValidationMessage } from 'src/common/validation-message/email-validation.message';
@@ -15,6 +15,11 @@ export class UsersModel extends BaseModel {
   @IsString({ message: stringValidationMessage })
   @Length(1, 20, { message: lengthValidationMessage })
   nickname: string;
+
+  @Expose()
+  get nicknameAndEmail() {
+    return this.nickname + '/' + this.email;
+  }
 
   @Column({ unique: true })
   @IsString({ message: stringValidationMessage })
