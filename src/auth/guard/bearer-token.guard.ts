@@ -19,9 +19,7 @@ export class BearerTokenGuard implements CanActivate {
 
     const rawToken = req.headers['authorization'];
 
-    if (!rawToken) {
-      throw new UnauthorizedException('토큰이 없습니다.');
-    }
+    if (!rawToken) throw new UnauthorizedException('토큰이 없습니다.');
 
     const token = this.authService.extractTokenFromHeader(rawToken, true);
 
@@ -44,9 +42,8 @@ export class AccessTokenGuard extends BearerTokenGuard {
 
     const req = context.switchToHttp().getRequest();
 
-    if (req.tokenType !== 'access') {
+    if (req.tokenType !== 'access')
       throw new UnauthorizedException('Access Token이 아닙니다.');
-    }
 
     return true;
   }
@@ -59,9 +56,8 @@ export class RefreshTokenGuard extends BearerTokenGuard {
 
     const req = context.switchToHttp().getRequest();
 
-    if (req.tokenType !== 'refresh') {
+    if (req.tokenType !== 'refresh')
       throw new UnauthorizedException('Refresh  Token이 아닙니다.');
-    }
 
     return true;
   }

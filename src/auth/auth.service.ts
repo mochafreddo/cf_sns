@@ -4,7 +4,8 @@ import * as bycrypt from 'bcrypt';
 import { UsersModel } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/users.service';
 import { HASH_ROUNDS, JWT_SECRET } from './const/auth.const';
-import { RegisterUserDto } from './dto/register-user.dto';
+import { UserAuthDto } from './dto/user-auth.dto';
+import { UserRegisterDto } from './dto/user-register.dto';
 
 @Injectable()
 export class AuthService {
@@ -80,9 +81,7 @@ export class AuthService {
     };
   }
 
-  async authenticateWithEmailAndPassword(
-    user: Pick<UsersModel, 'email' | 'password'>,
-  ) {
+  async authenticateWithEmailAndPassword(user: UserAuthDto) {
     const existingUser = await this.usersService.getUserByEmail(user.email);
     if (!existingUser)
       throw new UnauthorizedException('존재하지 않는 사용자입니다.');
@@ -99,7 +98,7 @@ export class AuthService {
     return this.loginUser(existingUser);
   }
 
-  async registerWithEmail(user: RegisterUserDto) {
+  async registerWithEmail(user: UserRegisterDto) {
     const hash = await bycrypt.hash(user.password, HASH_ROUNDS);
 
     const newUser = await this.usersService.createUser({
