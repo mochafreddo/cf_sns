@@ -5,10 +5,9 @@ export class paginatePostDto {
   @IsOptional()
   where__id_more_than?: number;
 
-  @IsIn(['ASC'])
+  @IsIn(['ASC', 'DESC'] as const)
   @IsOptional()
-  // eslint-disable-next-line @typescript-eslint/prefer-as-const
-  order__createdAt: 'ASC' = 'ASC';
+  order__createdAt: 'ASC' | 'DESC' = 'ASC';
 
   @IsNumber()
   @IsOptional()
