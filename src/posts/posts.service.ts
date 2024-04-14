@@ -38,6 +38,16 @@ export class PostsService {
   }
 
   async paginatePosts(dto: paginatePostDto) {
+    if (dto.page) {
+      return this.pagePaginatePosts(dto);
+    } else {
+      return this.cursorPaginatePosts(dto);
+    }
+  }
+
+  async pagePaginatePosts(dto: paginatePostDto) {}
+
+  async cursorPaginatePosts(dto: paginatePostDto) {
     const where: FindOptionsWhere<PostsModel> = {};
 
     if (dto.where__id_less_than) {
