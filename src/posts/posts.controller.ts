@@ -17,6 +17,7 @@ import { paginatePostDto } from './dto/paginate-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsModel } from './entities/posts.entity';
 import { PostsService } from './posts.service';
+import { UsersModel } from 'src/users/entities/users.entity';
 
 @Controller('posts')
 export class PostsController {
@@ -30,6 +31,15 @@ export class PostsController {
   @Get(':id')
   getPost(@Param('id', ParseIntPipe) id: number): Promise<PostsModel> {
     return this.postsService.getPostById(id);
+  }
+
+  // POST /posts/random
+  @Post('random')
+  @UseGuards(AccessTokenGuard)
+  async postPostRandom(@User() user: UsersModel) {
+    await this.postsService.generatePosts(user.id);
+
+    return true;
   }
 
   @Post()

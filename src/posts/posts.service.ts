@@ -26,6 +26,16 @@ export class PostsService {
     return this.postsRepository.find({ relations: ['author'] });
   }
 
+  // TODO: REMOVE (FOR TEST)
+  async generatePosts(userId: number) {
+    for (let i = 0; i < 100; i++) {
+      await this.createPost(userId, {
+        title: `임의로 생성된 포스트 제목 ${i}`,
+        content: `임의로 생성된 포스트 내용 ${i}`,
+      });
+    }
+  }
+
   async paginatePosts(dto: paginatePostDto) {
     const posts = await this.postsRepository.find({
       where: { id: MoreThan(dto.where__id_more_than ?? 0) },
