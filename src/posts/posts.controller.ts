@@ -23,8 +23,8 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Get()
-  getPosts(@Query() query: paginatePostDto): Promise<PostsModel[]> {
-    return this.postsService.getAllPosts();
+  getPosts(@Query() query: paginatePostDto) {
+    return this.postsService.paginatePosts(query);
   }
 
   @Get(':id')
