@@ -46,13 +46,13 @@ export class PostsService {
   }
 
   async pagePaginatePosts(dto: paginatePostDto) {
-    const posts = await this.postsRepository.find({
+    const [posts, count] = await this.postsRepository.findAndCount({
       skip: dto.take * (dto.page - 1),
       take: dto.take,
       order: { createdAt: dto.order__createdAt },
     });
 
-    return { data: posts };
+    return { data: posts, total: count };
   }
 
   async cursorPaginatePosts(dto: paginatePostDto) {
