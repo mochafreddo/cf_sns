@@ -7,6 +7,7 @@ import {
   FindOptionsWhere,
   Repository,
 } from 'typeorm';
+import { HOST, PROTOCOL } from './const/env.const';
 import { FILTER_MAPPER } from './const/filter-mapper.const';
 import { BasePaginationDto } from './dto/base-pagination.dto';
 import { BaseModel } from './entity/base.entity';
@@ -39,6 +40,47 @@ export class CommonService {
     path: string,
   ) {
     const findOptions = this.composeFindOptions<T>(dto);
+
+    const results = await repository.find({
+      ...findOptions,
+      ...overrideFindOptions,
+    });
+
+    const lastItem =
+      results.length > 0 && results.length === dto.take
+        ? results[results.length - 1]
+        : null;
+
+    const nextUrl = lastItem && new URL(`${PROTOCOL}://${HOST}/${path}`);
+
+    if (nextUrl) {
+      for (const key of Object.keys(dto)) {
+        if (dto[key]) {
+          if (
+            key !== 'where__id__more_than' &&
+            key !== 'where__id__less_than'
+          ) {
+            nextUrl.searchParams.append(key, dto[key]);
+          }
+        }
+      }
+      let key = null;
+
+      if (dto.order__createdAt === 'ASC') {
+        key = 'where__id__more_than';
+      } else {
+        key = 'where__id__less_than';
+      }
+
+      nextUrl.searchParams.append(key, lastItem.id.toString());
+    }
+
+    return {
+      data: results,
+      cursor: { after: lastItem?.id ?? null },
+      count: results.length,
+      next: nextUrl?.toString() ?? null,
+    };
   }
 
   private composeFindOptions<T extends BaseModel>(
@@ -68,8 +110,7 @@ export class CommonService {
     value: any,
   ): FindOptionsWhere<T> | FindOptionsOrder<T> {
     const options: FindOptionsWhere<T> = {};
-
-    const split = key.split['__'];
+    const split = key.split('__');
 
     if (split.length !== 2 && split.length !== 3) {
       throw new BadRequestException(
@@ -79,11 +120,9 @@ export class CommonService {
 
     if (split.length == 2) {
       const [_, field] = split;
-
       options[field] = value;
     } else {
       const [_, field, operator] = split;
-
       options[field] = FILTER_MAPPER[operator](value);
     }
 

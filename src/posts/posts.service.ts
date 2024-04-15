@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CommonService } from 'src/common/common.service';
 import { HOST, PROTOCOL } from 'src/common/const/env.const';
 import { FindOptionsWhere, LessThan, MoreThan, Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -21,6 +22,7 @@ export class PostsService {
   constructor(
     @InjectRepository(PostsModel)
     private readonly postsRepository: Repository<PostsModel>,
+    private readonly commonService: CommonService,
   ) {}
 
   getAllPosts() {
@@ -38,11 +40,12 @@ export class PostsService {
   }
 
   async paginatePosts(dto: paginatePostDto) {
-    if (dto.page) {
-      return this.pagePaginatePosts(dto);
-    } else {
-      return this.cursorPaginatePosts(dto);
-    }
+    return this.commonService.paginate(dto, this.postsRepository, {}, 'posts');
+    // if (dto.page) {
+    //   return this.pagePaginatePosts(dto);
+    // } else {
+    //   return this.cursorPaginatePosts(dto);
+    // }
   }
 
   async pagePaginatePosts(dto: paginatePostDto) {
