@@ -1,15 +1,20 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bycrypt from 'bcrypt';
+import {
+  ENV_HASH_ROUNDS_KEY,
+  ENV_JWT_SECRET_KEY,
+} from 'src/common/const/env-keys.const';
 import { UsersModel } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/users.service';
-import { HASH_ROUNDS, JWT_SECRET } from './const/auth.const';
 import { UserAuthDto } from './dto/user-auth.dto';
 import { UserRegisterDto } from './dto/user-register.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
   ) {}
@@ -43,14 +48,18 @@ export class AuthService {
 
   verifyToken(token: string) {
     try {
-      return this.jwtService.verify(token, { secret: JWT_SECRET });
+      return this.jwtService.verify(token, {
+        secret: this.configService.get<string>(ENV_JWT_SECRET_KEY),
+      });
     } catch (error) {
       throw new UnauthorizedException('토큰이 만료됐거나 잘못된 토큰입니다.');
     }
   }
 
   rotateToken(token: string, isRefreshToken: boolean) {
-    const decoded = this.jwtService.verify(token, { secret: JWT_SECRET });
+    const decoded = this.jwtService.verify(token, {
+      secret: this.configService.get<string>(ENV_JWT_SECRET_KEY),
+    });
 
     if (decoded.type !== 'refresh') {
       throw new UnauthorizedException(
@@ -69,7 +78,7 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload, {
-      secret: JWT_SECRET,
+      secret: this.configService.get<string>(ENV_JWT_SECRET_KEY),
       expiresIn: isRefreshToken ? 3600 : 300,
     });
   }
@@ -99,7 +108,10 @@ export class AuthService {
   }
 
   async registerWithEmail(user: UserRegisterDto) {
-    const hash = await bycrypt.hash(user.password, HASH_ROUNDS);
+    const hash = await bycrypt.hash(
+      user.password,
+      parseInt(this.configService.get<string>(ENV_HASH_ROUNDS_KEY)),
+    );
 
     const newUser = await this.usersService.createUser({
       ...user,
