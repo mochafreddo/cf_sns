@@ -20,7 +20,9 @@ export class PostsService {
       relations: ['author'],
     });
 
-    if (!post) throw new NotFoundException();
+    if (!post) {
+      throw new NotFoundException();
+    }
 
     return post;
   }
@@ -44,10 +46,16 @@ export class PostsService {
       where: { id: postId },
     });
 
-    if (!post) throw new NotFoundException();
+    if (!post) {
+      throw new NotFoundException();
+    }
 
-    if (title) post.title = title;
-    if (content) post.content = content;
+    if (title) {
+      post.title = title;
+    }
+    if (content) {
+      post.content = content;
+    }
 
     const newPost = await this.postsRepository.save(post);
 
@@ -57,7 +65,9 @@ export class PostsService {
   async deletePost(postId: number) {
     const post = await this.postsRepository.findOne({ where: { id: postId } });
 
-    if (!post) throw new NotFoundException();
+    if (!post) {
+      throw new NotFoundException();
+    }
 
     await this.postsRepository.delete(postId);
 
