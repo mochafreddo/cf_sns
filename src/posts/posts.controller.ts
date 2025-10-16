@@ -7,7 +7,6 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { PostsModel } from './entities/posts.entity';
 import { PostsService } from './posts.service';
 
 @Controller('posts')
@@ -15,7 +14,7 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Get()
-  getPosts(): Promise<PostsModel[]> {
+  getPosts() {
     return this.postsService.getAllPosts();
   }
 
@@ -26,21 +25,20 @@ export class PostsController {
 
   @Post()
   postPost(
-    @Body('author') author: string,
+    @Body('authorId') authorId: number,
     @Body('title') title: string,
     @Body('content') content: string,
   ) {
-    return this.postsService.createPost(author, title, content);
+    return this.postsService.createPost(authorId, title, content);
   }
 
   @Put(':id')
   putPosts(
     @Param('id') id: string,
-    @Body('author') author?: string,
     @Body('title') title?: string,
     @Body('content') content?: string,
   ) {
-    return this.postsService.updatePost(+id, author, title, content);
+    return this.postsService.updatePost(+id, title, content);
   }
 
   @Delete(':id')
