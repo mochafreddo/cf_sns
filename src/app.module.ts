@@ -3,11 +3,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { CommonModule } from './common/common.module';
 import { PostsModel } from './posts/entities/posts.entity';
 import { PostsModule } from './posts/posts.module';
 import { UsersModel } from './users/entities/users.entity';
 import { UsersModule } from './users/users.module';
-import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -21,10 +21,10 @@ import { CommonModule } from './common/common.module';
       entities: [PostsModel, UsersModel],
       synchronize: true,
     }),
-    PostsModule,
-    UsersModule,
     AuthModule,
     CommonModule,
+    PostsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

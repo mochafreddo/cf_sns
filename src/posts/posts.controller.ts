@@ -7,7 +7,10 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
+import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
+import { User } from 'src/users/decorator/user.decorator';
 import { PostsService } from './posts.service';
 
 @Controller('posts')
@@ -25,12 +28,13 @@ export class PostsController {
   }
 
   @Post()
+  @UseGuards(AccessTokenGuard)
   postPost(
-    @Body('authorId') authorId: number,
+    @User('id') userId: number,
     @Body('title') title: string,
     @Body('content') content: string,
   ) {
-    return this.postsService.createPost(authorId, title, content);
+    return this.postsService.createPost(userId, title, content);
   }
 
   @Put(':id')
