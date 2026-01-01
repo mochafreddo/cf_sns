@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CommonService } from 'src/common/common.service';
 import { HOST, PROTOCOL } from 'src/common/const/env.const';
 import { FindOptionsWhere, LessThan, MoreThan, Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -12,6 +13,7 @@ export class PostsService {
   constructor(
     @InjectRepository(PostsModel)
     private readonly postsRepository: Repository<PostsModel>,
+    private readonly commonService: CommonService,
   ) {}
 
   getAllPosts() {
@@ -28,11 +30,13 @@ export class PostsService {
   }
 
   async paginatePosts(dto: PaginatePostDto) {
-    if (dto.page) {
-      return this.pagePaginatePosts(dto);
-    } else {
-      return this.cursorPaginatePosts(dto);
-    }
+    // if (dto.page) {
+    //   return this.pagePaginatePosts(dto);
+    // } else {
+    //   return this.cursorPaginatePosts(dto);
+    // }
+
+    return this.commonService.paginate(dto, this.postsRepository, {}, 'posts');
   }
 
   async pagePaginatePosts(dto: PaginatePostDto) {
@@ -99,9 +103,7 @@ export class PostsService {
       relations: ['author'],
     });
 
-    if (!post) {
-      throw new NotFoundException();
-    }
+    if (!post) throw new NotFoundException();
 
     return post;
   }
@@ -122,20 +124,12 @@ export class PostsService {
   async updatePost(postId: number, postDto: UpdatePostDto) {
     const { title, content } = postDto;
 
-    const post = await this.postsRepository.findOne({
-      where: { id: postId },
-    });
+    const post = await this.postsRepository.findOne({ where: { id: postId } });
 
-    if (!post) {
-      throw new NotFoundException();
-    }
+    if (!post) throw new NotFoundException();
 
-    if (title) {
-      post.title = title;
-    }
-    if (content) {
-      post.content = content;
-    }
+    if (title) post.title = title;
+    if (content) post.content = content;
 
     const newPost = await this.postsRepository.save(post);
 
@@ -145,9 +139,7 @@ export class PostsService {
   async deletePost(postId: number) {
     const post = await this.postsRepository.findOne({ where: { id: postId } });
 
-    if (!post) {
-      throw new NotFoundException();
-    }
+    if (!post) throw new NotFoundException();
 
     await this.postsRepository.delete(postId);
 
