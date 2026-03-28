@@ -10,6 +10,8 @@ import { FILTER_MAPPER } from './const/filter-mapper.const';
 import { BasePaginationDto } from './dto/base-pagination.dto';
 import { BaseModel } from './entity/base.entity';
 
+type FilterValue = string | number | boolean | Date | null;
+
 @Injectable()
 export class CommonService {
   paginate<T extends BaseModel>(
@@ -116,11 +118,11 @@ export class CommonService {
 
   private parseWhereFilter<T extends BaseModel>(
     key: string,
-    value: any,
+    value: FilterValue,
   ): FindOptionsWhere<T> | FindOptionsOrder<T> {
     const options: FindOptionsWhere<T> = {};
-
     const split = key.split('__');
+
     if (split.length !== 2 && split.length !== 3) {
       throw new BadRequestException(
         `where 필터는 '__'로 split했을 때 길이가 2 또는 3이어야 합니다. - 문제되는 키값: ${key}`,
@@ -128,10 +130,10 @@ export class CommonService {
     }
 
     if (split.length === 2) {
-      const [_, field] = split;
+      const [, field] = split;
       options[field] = value;
     } else {
-      const [_, field, operator] = split;
+      const [, field, operator] = split;
 
       // const values = value.toString().split(',');
       // if (operator === 'between') {
@@ -140,9 +142,13 @@ export class CommonService {
       //   options[field] = FILTER_MAPPER[operator](value);
       // }
 
-      options[field] = FILTER_MAPPER[operator](value);
+      if (operator === 'i_like') {
+        options[field] = FILTER_MAPPER[operator](`%{value}%`);
+      } else {
+        options[field] = FILTER_MAPPER[operator](value);
+      }
     }
 
-    return options;
+    return options as FindOptionsWhere<T> | FindOptionsOrder<T>;
   }
 }
