@@ -7,19 +7,19 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 @Entity()
 export class PostsModel extends BaseModel {
   @ManyToOne(() => UsersModel, (user) => user.posts, { nullable: false })
-  author: UsersModel;
+  author!: UsersModel;
 
   @Column()
   @IsString({ message: stringValidationMessage })
-  title: string;
+  title!: string;
 
   @Column()
   @IsString({ message: stringValidationMessage })
-  content: string;
+  content!: string;
 
   @Column()
-  likeCount: number;
+  likeCount!: number;
 
   @Column()
-  commentCount: number;
+  commentCount!: number;
 }

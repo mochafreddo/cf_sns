@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from '../auth.service';
+import { AuthenticatedRequest } from '../types/auth-request.type';
 
 @Injectable()
 export class BearerTokenGuard implements CanActivate {
@@ -15,16 +16,20 @@ export class BearerTokenGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     const rawToken = req.headers['authorization'];
-    if (!rawToken) {
+    if (typeof rawToken !== 'string') {
       throw new UnauthorizedException('토큰이 없습니다.');
     }
 
     const token = this.authService.extractTokenFromHeader(rawToken, true);
-    const result = await this.authService.verifyToken(token);
+    const result = this.authService.verifyToken(token);
     const user = await this.usersService.getUserByEmail(result.email);
+
+    if (!user) {
+      throw new UnauthorizedException('존재하지 않는 사용자입니다.');
+    }
 
     req.user = user;
     req.token = token;
@@ -39,7 +44,7 @@ export class AccessTokenGuard extends BearerTokenGuard {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     await super.canActivate(context);
 
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
     if (req.tokenType !== 'access') {
       throw new UnauthorizedException('Access Token이 아닙니다.');
     }
@@ -53,7 +58,7 @@ export class RefreshTokenGuard extends BearerTokenGuard {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     await super.canActivate(context);
 
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
     if (req.tokenType !== 'refresh') {
       throw new UnauthorizedException('Refresh Token이 아닙니다.');
     }

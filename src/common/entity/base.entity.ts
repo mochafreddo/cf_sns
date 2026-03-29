@@ -6,11 +6,11 @@ import {
 
 export abstract class BaseModel {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

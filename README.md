@@ -28,6 +28,7 @@
 ## Project setup
 
 ```bash
+$ mise install
 $ pnpm install
 ```
 

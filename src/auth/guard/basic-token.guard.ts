@@ -5,16 +5,17 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from '../auth.service';
+import { AuthenticatedRequest } from '../types/auth-request.type';
 
 @Injectable()
 export class BasicTokenGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     const rawToken = req.headers['authorization'];
-    if (!rawToken) {
+    if (typeof rawToken !== 'string') {
       throw new UnauthorizedException('토큰이 없습니다.');
     }
 

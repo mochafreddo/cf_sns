@@ -1,2 +1,2 @@
-export const PROTOCOL = 'http';
-export const HOST = 'localhost:49153';
+export const PROTOCOL = process.env.PROTOCOL ?? 'http';
+export const HOST = process.env.HOST ?? 'localhost:3000';

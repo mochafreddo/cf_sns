@@ -1,19 +1,24 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   FindManyOptions,
   FindOptionsOrder,
   FindOptionsWhere,
   Repository,
 } from 'typeorm';
-import { HOST, PROTOCOL } from './const/env.const';
+import { ENV_HOST_KEY, ENV_PROTOCOL_KEY } from './const/env-keys.const';
 import { FILTER_MAPPER } from './const/filter-mapper.const';
 import { BasePaginationDto } from './dto/base-pagination.dto';
 import { BaseModel } from './entity/base.entity';
 
 type FilterValue = string | number | boolean | Date | null;
+type PaginationParamValue = string | number | boolean;
+type FilterOperator = keyof typeof FILTER_MAPPER;
 
 @Injectable()
 export class CommonService {
+  constructor(private readonly configService: ConfigService) {}
+
   paginate<T extends BaseModel>(
     dto: BasePaginationDto,
     repository: Repository<T>,
@@ -60,27 +65,32 @@ export class CommonService {
         ? results[results.length - 1]
         : null;
 
-    const nextUrl = lastItem && new URL(`${PROTOCOL}://${HOST}/${path}`);
+    const protocol = this.configService.get<string>(ENV_PROTOCOL_KEY);
+    const host = this.configService.get<string>(ENV_HOST_KEY);
+
+    const nextUrl = lastItem && new URL(`${protocol}://${host}/${path}`);
 
     if (nextUrl) {
       for (const key of Object.keys(dto)) {
-        if (dto[key]) {
+        const paramValue = dto[key as keyof BasePaginationDto];
+
+        if (paramValue !== undefined && paramValue !== null) {
           if (
             key !== 'where__id__more_than' &&
             key !== 'where__id__less_than'
           ) {
-            nextUrl.searchParams.append(key, dto[key]);
+            nextUrl.searchParams.append(
+              key,
+              this.toPaginationParamValue(paramValue),
+            );
           }
         }
       }
 
-      let key: string | null = null;
-
-      if (dto.order__createdAt === 'ASC') {
-        key = 'where__id__more_than';
-      } else {
-        key = 'where__id__less_than';
-      }
+      const key =
+        dto.order__createdAt === 'ASC'
+          ? 'where__id__more_than'
+          : 'where__id__less_than';
       nextUrl.searchParams.append(key, lastItem.id.toString());
     }
 
@@ -98,7 +108,9 @@ export class CommonService {
     let where: FindOptionsWhere<T> = {};
     let order: FindOptionsOrder<T> = {};
 
-    for (const [key, value] of Object.entries(dto)) {
+    for (const [key, rawValue] of Object.entries(dto)) {
+      const value = rawValue as FilterValue;
+
       if (value === undefined || value === null) continue;
 
       if (key.startsWith('where__')) {
@@ -131,24 +143,48 @@ export class CommonService {
 
     if (split.length === 2) {
       const [, field] = split;
-      options[field] = value;
+      (options as Record<string, FilterValue>)[field] = value;
     } else {
-      const [, field, operator] = split;
-
-      // const values = value.toString().split(',');
-      // if (operator === 'between') {
-      //   options[field] = FILTER_MAPPER[operator](values[0], values[1]);
-      // } else {
-      //   options[field] = FILTER_MAPPER[operator](value);
-      // }
+      const [, field, operator] = split as [string, string, FilterOperator];
+      const optionRecord = options as Record<string, unknown>;
 
       if (operator === 'i_like') {
-        options[field] = FILTER_MAPPER[operator](`%{value}%`);
+        optionRecord[field] = FILTER_MAPPER[operator](`%${String(value)}%`);
+      } else if (operator === 'between') {
+        const [start, end] = String(value).split(',');
+
+        if (!start || !end) {
+          throw new BadRequestException(
+            'between 필터는 "start,end" 형식이어야 합니다.',
+          );
+        }
+
+        optionRecord[field] = FILTER_MAPPER.between(start, end);
       } else {
-        options[field] = FILTER_MAPPER[operator](value);
+        optionRecord[field] = (
+          FILTER_MAPPER[operator] as (value: FilterValue) => unknown
+        )(value);
       }
     }
 
     return options as FindOptionsWhere<T> | FindOptionsOrder<T>;
+  }
+
+  private toPaginationParamValue(
+    value: BasePaginationDto[keyof BasePaginationDto],
+  ): string {
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      const paramValue: PaginationParamValue = value;
+
+      return String(paramValue);
+    }
+
+    throw new BadRequestException(
+      '페이지네이션 쿼리스트링 값이 잘못되었습니다.',
+    );
   }
 }

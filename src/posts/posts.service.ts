@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommonService } from 'src/common/common.service';
-import { HOST, PROTOCOL } from 'src/common/const/env.const';
+import {
+  ENV_HOST_KEY,
+  ENV_PROTOCOL_KEY,
+} from 'src/common/const/env-keys.const';
+import { BasePaginationDto } from 'src/common/dto/base-pagination.dto';
 import { FindOptionsWhere, LessThan, MoreThan, Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PaginatePostDto } from './dto/paginate-post.dto';
@@ -12,8 +17,9 @@ import { PostsModel } from './entities/posts.entity';
 export class PostsService {
   constructor(
     @InjectRepository(PostsModel)
-    private readonly postsRepository: Repository<PostsModel>,
+    private readonly configService: ConfigService,
     private readonly commonService: CommonService,
+    private readonly postsRepository: Repository<PostsModel>,
   ) {}
 
   getAllPosts() {
@@ -36,7 +42,12 @@ export class PostsService {
     //   return this.cursorPaginatePosts(dto);
     // }
 
-    return this.commonService.paginate(dto, this.postsRepository, {}, 'posts');
+    return this.commonService.paginate(
+      dto,
+      this.postsRepository,
+      { relations: ['author'] },
+      'posts',
+    );
   }
 
   async pagePaginatePosts(dto: PaginatePostDto) {
@@ -68,24 +79,27 @@ export class PostsService {
         ? posts[posts.length - 1]
         : null;
 
-    const nextUrl = lastItem && new URL(`${PROTOCOL}://${HOST}/posts`);
+    const protocol = this.configService.get<string>(ENV_PROTOCOL_KEY);
+    const host = this.configService.get<string>(ENV_HOST_KEY);
+
+    const nextUrl = lastItem && new URL(`${protocol}://${host}/posts`);
     if (nextUrl) {
       for (const key of Object.keys(dto)) {
-        if (dto[key]) {
+        const paramValue = dto[key as keyof BasePaginationDto];
+
+        if (paramValue !== undefined && paramValue !== null) {
           if (
             key !== 'where__id__more_than' &&
             key !== 'where__id__less_than'
           ) {
-            nextUrl.searchParams.append(key, dto[key]);
+            nextUrl.searchParams.append(key, String(paramValue));
           }
         }
       }
-      let key: string | null = null;
-      if (dto.order__createdAt === 'ASC') {
-        key = 'where__id__more_than';
-      } else {
-        key = 'where__id__less_than';
-      }
+      const key =
+        dto.order__createdAt === 'ASC'
+          ? 'where__id__more_than'
+          : 'where__id__less_than';
       nextUrl.searchParams.append(key, lastItem.id.toString());
     }
 
